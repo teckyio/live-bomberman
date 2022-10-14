@@ -1,5 +1,6 @@
 import assert from "assert";
 import { ColyseusTestServer, boot } from "@colyseus/testing";
+import sinon from "sinon";
 
 // import your "arena.config.ts" file here.
 import appConfig from "../src/arena.config";
@@ -109,5 +110,34 @@ describe("testing your Colyseus app", () => {
 
     // make your assertions
     assert.equal(false, room.state.started);
+  });
+
+  it("when the start game, the blocks are generated", async () => {
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+
+    await room.waitForNextPatch();
+
+    assert.equal(13 * 11, room.state.blocks.length);
+  });
+
+  it("when the start game, the blocks near the player are not generated", async () => {
+    sinon.stub(Math, 'random').returns(1);
+    
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+
+    await room.waitForNextPatch();
+
+    assert.equal(13 * 11, room.state.blocks.length);
+    assert.equal('empty', room.state.blocks.at(0).type);
+    assert.equal('empty', room.state.blocks.at(1).type);
+    assert.equal('wall', room.state.blocks.at(2).type);
+    assert.equal('empty', room.state.blocks.at(13).type);
+    assert.equal('wall', room.state.blocks.at(13 * 2).type);
   });
 });

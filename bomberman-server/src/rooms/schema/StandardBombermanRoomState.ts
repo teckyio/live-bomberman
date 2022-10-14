@@ -14,12 +14,12 @@ export class Player extends Schema {
 }
 
 export class Block extends Schema {
-  @type("number") type: 'empty' | 'stone' | 'wall' = 'empty';
+  @type("string") type: 'empty' | 'stone' | 'wall' = 'empty';
   @type("string") item: 'empty' | 'bomb' | 'powerup-bomb' = 'empty';
 }
 
 export class StandardBombermanRoomState extends Schema {
-  @type([ Block ]) blocks = new ArraySchema<Block>();
+  @type([ Block ]) blocks = new ArraySchema<Block>(); // 13 * 11
   @type([ "string" ]) playerOrder = new ArraySchema<string>();
   @type({ map: Player }) players = new MapSchema<Player>();
   @type("number") timeRemaining: number;
