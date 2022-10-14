@@ -1,25 +1,47 @@
 import { Room, Client } from "colyseus";
-import { StandardBombermanRoomState } from "./schema/StandardBombermanRoomState";
+import { Player, StandardBombermanRoomState } from "./schema/StandardBombermanRoomState";
 
 export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
 
   onCreate (options: any) {
     this.setState(new StandardBombermanRoomState());
 
-    this.onMessage("type", (client, message) => {
-      //
-      // handle "type" message
-      //
+    this.onMessage("start", (client, message) => {
+      
     });
 
   }
 
   onJoin (client: Client, options: any) {
-    console.log(client.sessionId, "joined!");
+    this.state.players.set(client.sessionId, new Player())
+    this.state.playerOrder.push(client.sessionId)
+
+    if (this.state.host === '') {
+      this.state.host = client.sessionId
+    }
   }
 
-  onLeave (client: Client, consented: boolean) {
-    console.log(client.sessionId, "left!");
+  async onLeave (client: Client, consented: boolean) {
+    try {
+      if (consented) {
+        throw new Error("Consented leave");
+      }
+
+      await this.allowReconnection(client, 10);
+    } catch (e) {
+      if (this.state.players.has(client.sessionId)) {
+        this.state.players.delete(client.sessionId);
+      }
+
+      const index = this.state.playerOrder.indexOf(client.sessionId);
+      if (index > -1) {
+        this.state.playerOrder.splice(index, 1);
+      }
+
+      if (this.state.host === client.sessionId) {
+        this.state.host = this.state.playerOrder.at(0) || ''
+      }
+    }
   }
 
   onDispose() {

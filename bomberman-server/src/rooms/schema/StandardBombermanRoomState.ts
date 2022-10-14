@@ -1,17 +1,28 @@
-import { Schema, ArraySchema, type } from "@colyseus/schema";
+import { Schema, ArraySchema, MapSchema, type } from "@colyseus/schema";
 
-class Player extends Schema {
-  @type("number") x: number;
-  @type("number") y: number;
+export enum PlayerDirection {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
 }
 
-class Block extends Schema {
-  @type("number") type: 'empty' | 'stone' | 'wall';
-  @type("boolean") item: 'bomb' | 'powerup-bomb' | null;
+export class Player extends Schema {
+  @type("number") x: number = 0;
+  @type("number") y: number = 0;
+  @type("number") direction: PlayerDirection = PlayerDirection.DOWN;
+}
+
+export class Block extends Schema {
+  @type("number") type: 'empty' | 'stone' | 'wall' = 'empty';
+  @type("string") item: 'empty' | 'bomb' | 'powerup-bomb' = 'empty';
 }
 
 export class StandardBombermanRoomState extends Schema {
   @type([ Block ]) blocks = new ArraySchema<Block>();
-  @type([ Player ]) players = new ArraySchema<Player>();
+  @type([ "string" ]) playerOrder = new ArraySchema<string>();
+  @type({ map: Player }) players = new MapSchema<Player>();
   @type("number") timeRemaining: number;
+  @type("boolean") started: number;
+  @type("string") host: string = '';
 }
