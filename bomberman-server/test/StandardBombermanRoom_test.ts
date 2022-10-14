@@ -1,10 +1,13 @@
 import assert from "assert";
 import { ColyseusTestServer, boot } from "@colyseus/testing";
 import sinon from "sinon";
+import FakeTimers from "@sinonjs/fake-timers";
 
 // import your "arena.config.ts" file here.
 import appConfig from "../src/arena.config";
 import { PlayerDirection, StandardBombermanRoomState } from "../src/rooms/schema/StandardBombermanRoomState";
+
+
 
 async function move(client: any, direction: PlayerDirection) {
   for (let i = 0; i < 10; i++) {
@@ -274,6 +277,19 @@ describe("testing your Colyseus app", () => {
 
     assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.x, 10);
     assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.y, 20);
+  });
+  
+  it("the player (0,0) place a bomb at 0,0", async () => {
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+    room.setSimulationInterval((deltaTime) => {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await client1.send("bomb");
+
+    await room.waitForNextSimulationTick();
+
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.dead, true);
   });
   
 });

@@ -5,3 +5,7 @@ export function tenFloor(i: number) {
 export function tenCeil(i: number) {
   return Math.ceil(i / 10) * 10;
 }
+
+export function tenRound(i: number) {
+  return Math.round(i / 10) * 10;
+}

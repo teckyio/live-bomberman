@@ -11,12 +11,14 @@ export class Player extends Schema {
   @type("number") x: number = 0; // ten times
   @type("number") y: number = 0; // ten times
   @type("number") direction: PlayerDirection = PlayerDirection.DOWN;
+  @type("boolean") dead: boolean = false;
 }
 
 export class Block extends Schema {
   @type("string") type: 'empty' | 'stone' | 'wall' = 'empty';
   @type("string") item: 'empty' | 'bomb' | 'powerup-bomb' = 'empty';
   @type("number") bombTime: number;
+  @type("number") bombStrength: number;
 }
 
 export class StandardBombermanRoomState extends Schema {
