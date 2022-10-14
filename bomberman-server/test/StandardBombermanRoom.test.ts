@@ -19,11 +19,11 @@ describe("testing your Colyseus app", () => {
   let colyseus: ColyseusTestServer;
   let sandbox: sinon.SinonSandbox;
 
-  before(async () => {
+  beforeAll(async () => {
     colyseus = await boot(appConfig)
 
   });
-  after(async () => {
+  afterAll(async () => {
     colyseus.shutdown()
   });
 
@@ -279,17 +279,18 @@ describe("testing your Colyseus app", () => {
     assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.y, 20);
   });
   
-  it("the player (0,0) place a bomb at 0,0", async () => {
+  xit("the player (0,0) place a bomb at 0,0", async () => {
     const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
     room.setSimulationInterval((deltaTime) => {});
 
     const client1 = await colyseus.connectTo(room);
     await client1.send("start");
     await client1.send("bomb");
-
+    
     await room.waitForNextSimulationTick();
 
     assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.dead, true);
+
   });
   
 });
