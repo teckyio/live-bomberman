@@ -95,7 +95,7 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
         }
       });
     }
-    
+
     this.broadcast("bomb", {
       block: coordinate,
       area: bombArea
@@ -160,7 +160,7 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
   }
 
   onDispose() {
-    console.log("room", this.roomId, "disposing...");
+    // console.log("room", this.roomId, "disposing...");
   }
 
   private convertCoordinateToXY(i: number) {
