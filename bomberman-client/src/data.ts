@@ -1,4 +1,4 @@
-import { emitMove } from './net'
+import { emitBomb, emitMove } from './net'
 
 const { round } = Math
 
@@ -196,7 +196,6 @@ export function moveSelfPlayer() {
 
 export function setSelfPlayerDirection(direction: Direction) {
   selfPlayer.direction = direction
-  // todo emit to server
 }
 
 export function selfPlaceBomb() {
@@ -204,6 +203,7 @@ export function selfPlaceBomb() {
   let x = round(selfPlayer.x)
   let y = round(selfPlayer.y)
   placeBomb(x, y, Date.now() + fakeInterval)
+  emitBomb()
 }
 
 export function placeBomb(x: number, y: number, bombTime: number) {

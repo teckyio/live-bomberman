@@ -38,3 +38,7 @@ function initRoom(room: Room) {
 export function emitMove(direction: Direction) {
   room.send('move', direction)
 }
+
+export function emitBomb() {
+  room.send('bomb')
+}
