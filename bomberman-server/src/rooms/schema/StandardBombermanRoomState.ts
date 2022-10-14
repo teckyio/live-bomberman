@@ -1,7 +1,29 @@
-import { Schema, Context, type } from "@colyseus/schema";
+import { Schema, ArraySchema, MapSchema, type } from "@colyseus/schema";
+
+export enum PlayerDirection {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
+}
+
+export class Player extends Schema {
+  @type("number") x: number = 0; // ten times
+  @type("number") y: number = 0; // ten times
+  @type("number") direction: PlayerDirection = PlayerDirection.DOWN;
+}
+
+export class Block extends Schema {
+  @type("string") type: 'empty' | 'stone' | 'wall' = 'empty';
+  @type("string") item: 'empty' | 'bomb' | 'powerup-bomb' = 'empty';
+  @type("number") bombTime: number;
+}
 
 export class StandardBombermanRoomState extends Schema {
-
-  @type("string") mySynchronizedProperty: string = "Hello world";
-
+  @type([ Block ]) blocks = new ArraySchema<Block>(); // 13 * 11
+  @type([ "string" ]) playerOrder = new ArraySchema<string>();
+  @type({ map: Player }) players = new MapSchema<Player>();
+  @type("number") timeRemaining: number;
+  @type("boolean") started: boolean = false;
+  @type("string") host: string = '';
 }
