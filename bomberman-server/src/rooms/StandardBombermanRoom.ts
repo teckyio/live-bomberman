@@ -1,5 +1,5 @@
 import { Room, Client } from "colyseus";
-import { tenCeil, tenFloor } from "../utils/math";
+import { tenCeil, tenFloor, tenRound } from "../utils/math";
 import { Block, Player, PlayerDirection, StandardBombermanRoomState } from "./schema/StandardBombermanRoomState";
 
 const playerPositions = [
@@ -57,6 +57,74 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
         // console.log(x, y, message, 'movement blocked by type ', block.type)
       }
     })
+
+    this.onMessage("bomb", (client, message) => {
+      const player = this.state.players.get(client.sessionId)
+      const coordinate = this.convertXYToCoordinate(player.x, player.y);
+      const block = this.state.blocks.at(coordinate)
+      block.item = "bomb";
+      block.bombStrength = 3;
+      const bombDelay = 1000;
+      block.bombTime = this.clock.elapsedTime + bombDelay;
+      this.clock.setTimeout(() => {
+        this.bomb(coordinate);
+      }, bombDelay)
+    });
+  }
+
+  private bomb(coordinate: number) {
+    const [x, y] = this.convertCoordinateToXY(coordinate);
+    const block = this.state.blocks.at(coordinate);
+
+    block.item = "empty";
+    block.bombTime = 0;
+
+    const bombArea: [number, number][] = [
+      [x, y]
+    ];
+
+    this.bombLine(block, coordinate, (x: number, y: number, i: number) => [x + i * 10, y], bombArea);
+    this.bombLine(block, coordinate, (x: number, y: number, i: number) => [x - i * 10, y], bombArea);
+    this.bombLine(block, coordinate, (x: number, y: number, i: number) => [x, y + i * 10], bombArea);
+    this.bombLine(block, coordinate, (x: number, y: number, i: number) => [x, y - i * 10], bombArea);
+
+    for (const [x, y] of bombArea) {
+      this.state.players.forEach(player => {
+        if (tenRound(player.x) === x && tenRound(player.y) === y) {
+          player.dead = true;
+        }
+      });
+    }
+    
+    this.broadcast("bomb", {
+      block: coordinate,
+      area: bombArea
+    });
+  }
+
+  private bombLine(block: Block, coordinate: number, nextBlock: (x: number, y: number, i: number) => number[], bombArea: [number, number][]) {
+    for (let i = 0; i < block.bombStrength; i++) {
+      const [x, y] = this.convertCoordinateToXY(coordinate);
+      const [nX, nY] = nextBlock(x, y, i);
+      if (nX < 0 || nY < 0 || nX >= width * 10 || nY >= height * 10) {
+        break;
+      }
+      const nCoordinate = this.convertXYToCoordinate(nX, nY)
+      const block = this.state.blocks.at(nCoordinate);
+      if (block.type === 'wall') {
+        bombArea.push([nX, nY]);
+        block.item = 'empty';
+        break;
+      } else if (block.type === 'stone') {
+        break;
+      } else {
+        bombArea.push([nX, nY]);
+      }
+
+      if (block.item === 'bomb') {
+        this.bomb(nCoordinate);
+      }
+    }
   }
 
   onJoin (client: Client, options: any) {
