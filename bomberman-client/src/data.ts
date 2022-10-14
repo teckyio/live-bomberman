@@ -1,3 +1,5 @@
+import { emitMove } from './net'
+
 const { round } = Math
 
 let fakeInterval = 3 * 1000
@@ -177,7 +179,19 @@ export function moveSelfPlayer() {
 
   selfPlayer.x = x
   selfPlayer.y = y
-  // todo emit to server
+
+  // emit to server
+  if (moveX < 0) {
+    emitMove(Direction.left)
+  } else if (moveX > 0) {
+    emitMove(Direction.right)
+  }
+
+  if (moveY < 0) {
+    emitMove(Direction.up)
+  } else {
+    emitMove(Direction.down)
+  }
 }
 
 export function setSelfPlayerDirection(direction: Direction) {
