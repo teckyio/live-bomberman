@@ -4,15 +4,34 @@ import sinon from "sinon";
 
 // import your "arena.config.ts" file here.
 import appConfig from "../src/arena.config";
-import { StandardBombermanRoomState } from "../src/rooms/schema/StandardBombermanRoomState";
+import { PlayerDirection, StandardBombermanRoomState } from "../src/rooms/schema/StandardBombermanRoomState";
+
+async function move(client: any, direction: PlayerDirection) {
+  for (let i = 0; i < 10; i++) {
+    await client.send("move", direction);
+  }
+}
 
 describe("testing your Colyseus app", () => {
   let colyseus: ColyseusTestServer;
+  let sandbox: sinon.SinonSandbox;
 
-  before(async () => colyseus = await boot(appConfig));
-  after(async () => colyseus.shutdown());
+  before(async () => {
+    colyseus = await boot(appConfig)
 
-  beforeEach(async () => await colyseus.cleanup());
+  });
+  after(async () => {
+    colyseus.shutdown()
+  });
+
+  beforeEach(async () => {
+    await colyseus.cleanup()
+    sandbox = sinon.createSandbox();
+  });
+
+  afterEach(async () => {
+    sandbox.restore();
+  });
 
   it("connecting into a room will have one player", async () => {
     // `room` is the server-side Room instance reference.
@@ -124,7 +143,7 @@ describe("testing your Colyseus app", () => {
   });
 
   it("when the start game, the blocks near the player are not generated", async () => {
-    sinon.stub(Math, 'random').returns(1);
+    sandbox.stub(Math, 'random').returns(1);
     
     const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
 
@@ -139,8 +158,6 @@ describe("testing your Colyseus app", () => {
     assert.equal('wall', room.state.blocks.at(2).type);
     assert.equal('empty', room.state.blocks.at(13).type);
     assert.equal('wall', room.state.blocks.at(13 * 2).type);
-
-    sinon.restore()
   });
 
   it("when the start game, the four players will stand in four corners", async () => {
@@ -157,13 +174,106 @@ describe("testing your Colyseus app", () => {
     assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.x);
     assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.y);
 
-    assert.equal(13 - 1, room.state.players.get(room.state.playerOrder.at(1))!.x);
-    assert.equal(11 - 1, room.state.players.get(room.state.playerOrder.at(1))!.y);
+    assert.equal(130 - 10, room.state.players.get(room.state.playerOrder.at(1))!.x);
+    assert.equal(110 - 10, room.state.players.get(room.state.playerOrder.at(1))!.y);
 
     assert.equal(0, room.state.players.get(room.state.playerOrder.at(2))!.x);
-    assert.equal(11 - 1, room.state.players.get(room.state.playerOrder.at(2))!.y);
+    assert.equal(110 - 10, room.state.players.get(room.state.playerOrder.at(2))!.y);
 
-    assert.equal(13 - 1, room.state.players.get(room.state.playerOrder.at(3))!.x);
+    assert.equal(130 - 10, room.state.players.get(room.state.playerOrder.at(3))!.x);
     assert.equal(0, room.state.players.get(room.state.playerOrder.at(3))!.y);
   });
+
+  it("the player should move not beyond the boundary", async () => {
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await move(client1, PlayerDirection.UP);
+    await room.waitForNextPatch();
+
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.x);
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.y);
+  });
+  
+  it("the player should move one block down", async () => {
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await move(client1, PlayerDirection.DOWN);
+    await room.waitForNextPatch();
+
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.x);
+    assert.equal(10, room.state.players.get(room.state.playerOrder.at(0))!.y);
+  });
+  
+  it("the player should not move towards block", async () => {
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await move(client1, PlayerDirection.DOWN);
+    await move(client1, PlayerDirection.RIGHT);
+    await room.waitForNextPatch();
+
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.x);
+    assert.equal(10, room.state.players.get(room.state.playerOrder.at(0))!.y);
+  });
+  
+  it("the player move down twice", async () => {
+    sandbox.stub(Math, 'random').returns(0);
+
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await move(client1, PlayerDirection.DOWN);
+    await move(client1, PlayerDirection.DOWN);
+    await room.waitForNextPatch();
+
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.x, 0);
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.y, 20);
+  });
+  
+  
+  it("the player move down left right down right and block by wall", async () => {
+    const stub = sandbox.stub(Math, 'random')
+    stub.onCall(13 * 2).returns(0);
+    stub.returns(1);
+
+
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await move(client1, PlayerDirection.DOWN);
+    await move(client1, PlayerDirection.LEFT);
+    await move(client1, PlayerDirection.RIGHT);
+    await move(client1, PlayerDirection.DOWN);
+    await move(client1, PlayerDirection.RIGHT);
+    await room.waitForNextPatch();
+
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.x, 0);
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.y, 20);
+  });
+  
+  it("the player move down left right down right and not block by wall", async () => {
+    sandbox.stub(Math, 'random').returns(0);
+
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+    await move(client1, PlayerDirection.DOWN);
+    await move(client1, PlayerDirection.LEFT);
+    await move(client1, PlayerDirection.RIGHT);
+    await move(client1, PlayerDirection.DOWN);
+    await move(client1, PlayerDirection.RIGHT);
+    await room.waitForNextPatch();
+
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.x, 10);
+    assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.y, 20);
+  });
+  
 });

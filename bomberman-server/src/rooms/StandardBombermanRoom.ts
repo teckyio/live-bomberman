@@ -1,5 +1,6 @@
 import { Room, Client } from "colyseus";
-import { Block, Player, StandardBombermanRoomState } from "./schema/StandardBombermanRoomState";
+import { tenCeil, tenFloor } from "../utils/math";
+import { Block, Player, PlayerDirection, StandardBombermanRoomState } from "./schema/StandardBombermanRoomState";
 
 const playerPositions = [
   [0, 0],   // player 1 position
@@ -27,6 +28,35 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
       this.clock.start();
     });
 
+    this.onMessage("move", (client, message) => {
+      // [TODO]: need to check last move time
+      const player = this.state.players.get(client.sessionId)
+      let x = player.x;
+      let y = player.y;
+      let block = null;
+      if (message === PlayerDirection.UP) {
+        y -= 1;
+        block = this.state.blocks.at(this.convertXYToCoordinate(x, tenFloor(y)));
+      } else if (message === PlayerDirection.DOWN) {
+        y += 1;
+        block = this.state.blocks.at(this.convertXYToCoordinate(x, tenCeil(y)));
+      } else if (message === PlayerDirection.LEFT) {
+        x -= 1;
+        block = this.state.blocks.at(this.convertXYToCoordinate(tenFloor(x), y))
+      } else if (message === PlayerDirection.RIGHT) {
+        x += 1;
+        block = this.state.blocks.at(this.convertXYToCoordinate(tenCeil(x), y))
+      }
+      if (x < 0 || y < 0 || x >= width * 10 || y >= height * 10) {
+        return;
+      }
+      if (block.type === 'empty') {
+        player.x = x;
+        player.y = y;
+      } else {
+        // console.log(x, y, message, 'movement blocked by type ', block.type)
+      }
+    })
   }
 
   onJoin (client: Client, options: any) {
@@ -66,21 +96,22 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
   }
 
   private convertCoordinateToXY(i: number) {
-    return [i % width, Math.floor(i / width)];
+    return [i % width * 10, Math.floor(i / width) * 10];
   }
 
   private convertXYToCoordinate(x: number, y: number) {
-    return y * width + x;
+    return Math.round(y / 10) * width + Math.round(x / 10);
   }
 
   private generateBlocks() {
     for (let i = 0; i < width * height; i++) {
       const [x, y] = this.convertCoordinateToXY(i);
       const block = new Block();
-      if (x % 2 === 1 && y % 2 === 1) {
-        block.type = 'stone';
-      } else if (Math.random() > 0.3) {
+      if (Math.random() > 0.3) {
         block.type = 'wall';
+      }
+      if (x % 20 === 10 && y % 20 === 10) {
+        block.type = 'stone';
       }
       this.state.blocks.push(block);
     }
@@ -93,8 +124,8 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
       const sessionId = this.state.playerOrder.at(i);
       const x = (playerPositions[i][0] + width) % width;
       const y = (playerPositions[i][1] + height) % height;
-      this.state.players.get(sessionId).x = x
-      this.state.players.get(sessionId).y = y
+      this.state.players.get(sessionId).x = x * 10
+      this.state.players.get(sessionId).y = y * 10
 
       // the surrounded block should be removed
       const surroundings = [
@@ -105,8 +136,8 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
         [0, 1],
       ]
       for (const surrounding of surroundings) {
-        const nX = x + surrounding[0]
-        const nY = y + surrounding[1]
+        const nX = x + surrounding[0] * 10
+        const nY = y + surrounding[1] * 10
 
         if (nX < 0 || nX >= width || nY < 0 || nY >= height) {
           continue;

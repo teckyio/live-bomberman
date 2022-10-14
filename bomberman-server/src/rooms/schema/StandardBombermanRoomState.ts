@@ -8,14 +8,15 @@ export enum PlayerDirection {
 }
 
 export class Player extends Schema {
-  @type("number") x: number = 0;
-  @type("number") y: number = 0;
+  @type("number") x: number = 0; // ten times
+  @type("number") y: number = 0; // ten times
   @type("number") direction: PlayerDirection = PlayerDirection.DOWN;
 }
 
 export class Block extends Schema {
   @type("string") type: 'empty' | 'stone' | 'wall' = 'empty';
   @type("string") item: 'empty' | 'bomb' | 'powerup-bomb' = 'empty';
+  @type("number") bombTime: number;
 }
 
 export class StandardBombermanRoomState extends Schema {
