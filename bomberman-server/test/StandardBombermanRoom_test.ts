@@ -139,5 +139,31 @@ describe("testing your Colyseus app", () => {
     assert.equal('wall', room.state.blocks.at(2).type);
     assert.equal('empty', room.state.blocks.at(13).type);
     assert.equal('wall', room.state.blocks.at(13 * 2).type);
+
+    sinon.restore()
+  });
+
+  it("when the start game, the four players will stand in four corners", async () => {
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    const client2 = await colyseus.connectTo(room);
+    const client3 = await colyseus.connectTo(room);
+    const client4 = await colyseus.connectTo(room);
+    await client1.send("start");
+
+    await room.waitForNextPatch();
+
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.x);
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(0))!.y);
+
+    assert.equal(13 - 1, room.state.players.get(room.state.playerOrder.at(1))!.x);
+    assert.equal(11 - 1, room.state.players.get(room.state.playerOrder.at(1))!.y);
+
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(2))!.x);
+    assert.equal(11 - 1, room.state.players.get(room.state.playerOrder.at(2))!.y);
+
+    assert.equal(13 - 1, room.state.players.get(room.state.playerOrder.at(3))!.x);
+    assert.equal(0, room.state.players.get(room.state.playerOrder.at(3))!.y);
   });
 });
