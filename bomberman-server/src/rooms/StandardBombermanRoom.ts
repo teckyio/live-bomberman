@@ -6,8 +6,12 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
   onCreate (options: any) {
     this.setState(new StandardBombermanRoomState());
 
-    this.onMessage("start", (client, message) => {
-      
+    this.onMessage("start", (client) => {
+      if (this.state.host !== client.sessionId) {
+        return;
+      }
+
+      this.state.started = true;
     });
 
   }

@@ -79,4 +79,35 @@ describe("testing your Colyseus app", () => {
     // make your assertions
     assert.equal('', room.state.host);
   });
+
+  it("if host starts the game, the game will start", async () => {
+    // `room` is the server-side Room instance reference.
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    // `client1` is the client-side `Room` instance reference (same as JavaScript SDK)
+    const client1 = await colyseus.connectTo(room);
+    await client1.send("start");
+
+    // wait for state sync
+    await room.waitForNextPatch();
+
+    // make your assertions
+    assert.equal(true, room.state.started);
+  });
+
+  it("if guest starts the game, the game will NOT start", async () => {
+    // `room` is the server-side Room instance reference.
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    // `client1` is the client-side `Room` instance reference (same as JavaScript SDK)
+    const client1 = await colyseus.connectTo(room);
+    const client2 = await colyseus.connectTo(room);
+    await client2.send("start");
+
+    // wait for state sync
+    await room.waitForNextPatch();
+
+    // make your assertions
+    assert.equal(false, room.state.started);
+  });
 });

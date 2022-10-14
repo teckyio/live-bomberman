@@ -23,6 +23,6 @@ export class StandardBombermanRoomState extends Schema {
   @type([ "string" ]) playerOrder = new ArraySchema<string>();
   @type({ map: Player }) players = new MapSchema<Player>();
   @type("number") timeRemaining: number;
-  @type("boolean") started: number;
+  @type("boolean") started: boolean = false;
   @type("string") host: string = '';
 }
