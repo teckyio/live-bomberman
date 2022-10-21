@@ -7,8 +7,6 @@ import FakeTimers from "@sinonjs/fake-timers";
 import appConfig from "../src/arena.config";
 import { PlayerDirection, StandardBombermanRoomState } from "../src/rooms/schema/StandardBombermanRoomState";
 
-
-
 async function move(client: any, direction: PlayerDirection) {
   for (let i = 0; i < 10; i++) {
     await client.send("move", direction);
@@ -163,6 +161,29 @@ describe("testing your Colyseus app", () => {
     assert.equal('wall', room.state.blocks.at(13 * 2).type);
   });
 
+  it("when the start game, the blocks near the player 2 are not generated", async () => {
+    sandbox.stub(Math, 'random').returns(1);
+    
+    const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
+
+    const client1 = await colyseus.connectTo(room);
+    const client2 = await colyseus.connectTo(room);
+    await client1.send("start");
+
+    await room.waitForNextPatch();
+
+    assert.equal(13 * 11, room.state.blocks.length);
+    assert.equal('stone', room.state.blocks.at(13 + 1).type);
+    assert.equal('empty', room.state.blocks.at(0).type);
+    assert.equal('empty', room.state.blocks.at(1).type);
+    assert.equal('wall', room.state.blocks.at(2).type);
+    assert.equal('empty', room.state.blocks.at(13).type);
+    assert.equal('wall', room.state.blocks.at(13 * 2).type);
+    assert.equal('empty', room.state.blocks.at(13 * 10 + 12).type);
+    assert.equal('empty', room.state.blocks.at(13 * 10 + 11).type);
+    assert.equal('empty', room.state.blocks.at(13 * 9 + 12).type);
+  });
+
   it("when the start game, the four players will stand in four corners", async () => {
     const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
 
@@ -281,16 +302,15 @@ describe("testing your Colyseus app", () => {
   
   xit("the player (0,0) place a bomb at 0,0", async () => {
     const room = await colyseus.createRoom<StandardBombermanRoomState>("standard_bomberman_room", {});
-    room.setSimulationInterval((deltaTime) => {});
-
+    
     const client1 = await colyseus.connectTo(room);
     await client1.send("start");
     await client1.send("bomb");
+    await room.waitForNextPatch();
     
-    await room.waitForNextSimulationTick();
+    jest.advanceTimersByTime(100000);
 
     assert.equal(room.state.players.get(room.state.playerOrder.at(0))!.dead, true);
-
   });
   
 });

@@ -5,3 +5,25 @@ body {
 canvas {
   image-rendering: pixelated;
 }
+
+#lobby {
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.screen {
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+body[data-current-screen="lobby"] #lobby {
+  display: flex;
+}
+body[data-current-screen="room"] #room {
+  display: flex;
+}
+body[data-current-screen="game"] #game {
+  display: flex;
+}

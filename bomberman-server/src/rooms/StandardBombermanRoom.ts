@@ -66,7 +66,8 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
       block.bombStrength = 3;
       const bombDelay = 1000;
       block.bombTime = this.clock.elapsedTime + bombDelay;
-      this.clock.setTimeout(() => {
+      console.log('bomb placed at ', coordinate, ' at ', block.bombTime)
+      setTimeout(() => {
         this.bomb(coordinate);
       }, bombDelay)
     });
@@ -204,10 +205,10 @@ export class StandardBombermanRoom extends Room<StandardBombermanRoomState> {
         [0, 1],
       ]
       for (const surrounding of surroundings) {
-        const nX = x + surrounding[0] * 10
-        const nY = y + surrounding[1] * 10
+        const nX = x * 10 + surrounding[0] * 10
+        const nY = y * 10 + surrounding[1] * 10
 
-        if (nX < 0 || nX >= width || nY < 0 || nY >= height) {
+        if (nX < 0 || nX >= width * 10 || nY < 0 || nY >= height * 10) {
           continue;
         }
 

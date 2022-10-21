@@ -9,8 +9,6 @@ export type World = Cell[][]
 
 // export type Cell = Player | Box | Stone | Space
 export type Cell = {
-  x: number
-  y: number
   box?: boolean
   stone?: boolean
   bomb?: number // bomb time
@@ -51,8 +49,8 @@ export let players: Player[] = []
 export let bombs = new Set<Cell>()
 export let fires = new Set<Cell>()
 
-export let X = 15
-export let Y = 13
+export let X = 13
+export let Y = 11
 
 for (let y = 0; y < Y; y++) {
   world[y] = []
@@ -169,6 +167,19 @@ export function setMoveY(value: number) {
 }
 
 export function moveSelfPlayer() {
+  // emit to server
+  if (moveX < 0) {
+    emitMove(Direction.left)
+  } else if (moveX > 0) {
+    emitMove(Direction.right)
+  }
+
+  if (moveY < 0) {
+    emitMove(Direction.up)
+  } else if (moveY > 0) {
+    emitMove(Direction.down)
+  }
+
   let x = selfPlayer.x + moveX * 0.1
   let y = selfPlayer.y + moveY * 0.1
 
@@ -180,18 +191,6 @@ export function moveSelfPlayer() {
   selfPlayer.x = x
   selfPlayer.y = y
 
-  // emit to server
-  if (moveX < 0) {
-    emitMove(Direction.left)
-  } else if (moveX > 0) {
-    emitMove(Direction.right)
-  }
-
-  if (moveY < 0) {
-    emitMove(Direction.up)
-  } else {
-    emitMove(Direction.down)
-  }
 }
 
 export function setSelfPlayerDirection(direction: Direction) {
@@ -223,30 +222,30 @@ export function placeFire(x: number, y: number, expireTime: number) {
   fires.add(cell)
 }
 
-export function checkBombFire(now: number) {
-  for (let cell of bombs) {
-    if (cell.bomb! <= now) {
-      delete cell.bomb
-      bombs.delete(cell)
-      placeFire(cell.x, cell.y, Date.now() + fakeInterval)
+// export function checkBombFire(now: number) {
+//   for (let cell of bombs) {
+//     if (cell.bomb! <= now) {
+//       delete cell.bomb
+//       bombs.delete(cell)
+//       placeFire(cell.x, cell.y, Date.now() + fakeInterval)
 
-      placeFire(cell.x, cell.y - 1, Date.now() + fakeInterval)
-      placeFire(cell.x, cell.y - 2, Date.now() + fakeInterval)
+//       placeFire(cell.x, cell.y - 1, Date.now() + fakeInterval)
+//       placeFire(cell.x, cell.y - 2, Date.now() + fakeInterval)
 
-      placeFire(cell.x, cell.y + 1, Date.now() + fakeInterval)
-      placeFire(cell.x, cell.y + 2, Date.now() + fakeInterval)
+//       placeFire(cell.x, cell.y + 1, Date.now() + fakeInterval)
+//       placeFire(cell.x, cell.y + 2, Date.now() + fakeInterval)
 
-      placeFire(cell.x - 1, cell.y, Date.now() + fakeInterval)
-      placeFire(cell.x - 2, cell.y, Date.now() + fakeInterval)
+//       placeFire(cell.x - 1, cell.y, Date.now() + fakeInterval)
+//       placeFire(cell.x - 2, cell.y, Date.now() + fakeInterval)
 
-      placeFire(cell.x + 1, cell.y, Date.now() + fakeInterval)
-      placeFire(cell.x + 2, cell.y, Date.now() + fakeInterval)
-    }
-  }
-  for (let cell of fires) {
-    if (cell.fire! <= now) {
-      delete cell.fire
-      fires.delete(cell)
-    }
-  }
-}
+//       placeFire(cell.x + 1, cell.y, Date.now() + fakeInterval)
+//       placeFire(cell.x + 2, cell.y, Date.now() + fakeInterval)
+//     }
+//   }
+//   for (let cell of fires) {
+//     if (cell.fire! <= now) {
+//       delete cell.fire
+//       fires.delete(cell)
+//     }
+//   }
+// }

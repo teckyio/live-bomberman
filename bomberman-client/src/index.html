@@ -7,8 +7,22 @@
     <title>Document</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <canvas id="main"></canvas>
-    <script type="module" src="main.js"></script>
+  <body data-current-screen="lobby">
+    <div class="screen" id="lobby">
+      <form>
+        <input type="text" name="room-id" placeholder="Room ID: KRYAKzRo2">
+        <input type="submit" value="Join">
+      </form>
+
+      <button id="create">Create A Room</button>
+    </div>
+    <div class="screen" id="room">
+      <p>Room ID: <span id="room-id"></span></p>
+      <button id="start">Start</button>
+    </div>
+    <div class="screen" id="game">
+      <canvas id="main"></canvas>
+    </div>
+    <script type="module" src="net.js"></script>
   </body>
 </html>
